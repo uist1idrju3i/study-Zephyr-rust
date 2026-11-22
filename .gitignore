@@ -1,0 +1,11 @@
+.yomiyasu/
+build/
+.west/
+zephyr/
+nrf/
+nrfxlib/
+bootloader/
+modules/
+test/
+tools/
+yomi_orig/
