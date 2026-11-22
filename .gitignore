@@ -1,3 +1,4 @@
+.yomiyasu/
 build/
 .west/
 zephyr/
@@ -7,3 +8,4 @@ bootloader/
 modules/
 test/
 tools/
+yomi_orig/

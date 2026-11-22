@@ -4,7 +4,7 @@
 
 ## zephyrproject-rtos/zephyr-lang-rust issue #126 (2025-08)
 
-- ユーザーがnRF54L15-DK + NCSでRustを試行:
+- ユーザーがnRF54L15-DK + NCSでRustを試行した。
   - 上流手順 (`manifest.project-filter +zephyr-lang-rust`) が NCSでは機能しない
     (`name-allowlist` で輸入されるプロジェクトが制限されるため)。
   - 手動で `modules/lang/rust` にclone + `CONFIG_RUST=y` →
@@ -16,7 +16,7 @@
 
 ## コミュニティ実装例
 
-- [`ciniml/zephyr_rust_examples`](https://github.com/ciniml/zephyr_rust_examples):
+- [`ciniml/zephyr_rust_examples`](https://github.com/ciniml/zephyr_rust_examples) は
   NCS上でZephyr Rustを動かす実例集。nRF54L15-DKでの動作実績があるとREADME記載
   (本リポジトリではその手順は試していない)。
 - zephyr-lang-rust自体のCI (`.github/workflows/build.yml`): Ubuntu 22.04上で
@@ -33,6 +33,6 @@
 
 ## 見つけた落とし穴 (本リポジトリ実検証由来)
 
-- `CONFIG_ENFORCE_ZEPHYR_STDINT` 構成での bindgen `__UINT32_C` 未定義:
+- `CONFIG_ENFORCE_ZEPHYR_STDINT` 構成で bindgen が `__UINT32_C` 未定義となる問題。
   コミュニティ記事・issueでは未整備の新規知見と見られる
   (→ `../verification/build-2026-11-22.md` 参照)。

@@ -1,87 +1,68 @@
 # study-Zephyr-rust
 
-Trying Zephyr's Rust language support on the **nRF54L15-DK**
-(`nrf54l15dk/nrf54l15/cpuapp`) with **nRF Connect SDK v3.4.2**
-(the first NCS LTS release line; Zephyr 4.4.2).
+nRF54L15-DK (`nrf54l15dk/nrf54l15/cpuapp`) で、Zephyr の Rust 言語サポートを試すリポジトリです。基盤は nRF Connect SDK v3.4.2 です (NCS 初の LTS 系列、Zephyr 4.4.2)。
 
-Rust support in Zephyr is provided by the external module
-[`zephyr-lang-rust`](https://github.com/zephyrproject-rtos/zephyr-lang-rust)
-(status: *experimental*). The NCS manifest does not include it by default;
-this repo pins the same revision as `sdk-zephyr/submanifests/optional.yaml`
-in ncs-v3.4.2 (`dd73abc`).
+Zephyr の Rust サポートは外部モジュール [zephyr-lang-rust](https://github.com/zephyrproject-rtos/zephyr-lang-rust) として提供され、状態は experimental です。NCS のマニフェストには既定で含まれないため、このリポジトリは ncs-v3.4.2 の `sdk-zephyr/submanifests/optional.yaml` がピンする版 (`dd73abc`) を指定しています。
 
-## Layout
+## 構成
 
-- `docs/` — 調査・検討・検証記録 (Japanese). See
-  [docs/README.md](docs/README.md)
+- `west.yml`: T2 型の west マニフェストです。`sdk-nrf` v3.4.2 を import し、`zephyr-lang-rust` を `modules/lang/rust` に追加します。
+- `app/`: `no_std` の最小 Rust アプリケーションです (hello_world 相当)。Zephyr の logging 経由で `Hello world from Rust on nrf54l15dk` を UART コンソールに出します。
+- `docs/`: 調査・検討・検証の記録です。索引は [docs/README.md](docs/README.md) にあります。
 
-- `west.yml` — standalone (T2) west manifest: imports `sdk-nrf` v3.4.2 and
-  adds `zephyr-lang-rust` at `modules/lang/rust`
-- `app/` — minimal `no_std` Rust application (`hello_world`-style):
-  logs `Hello world from Rust on nrf54l15dk` via the Zephyr logging
-  subsystem (UART console)
+## 必要なもの
 
-## Prerequisites
-
-- nRF Connect SDK **v3.4.2** toolchain
+- nRF Connect SDK v3.4.2 ツールチェーン
   (`nrfutil sdk-manager toolchain install --ncs-version v3.4.2`)
-- Rust via [rustup](https://rustup.rs/), plus the ARM target:
+- [rustup](https://rustup.rs/) で入れた Rust と、次の ARM 用ターゲット。
 
   ```sh
   rustup target add thumbv8m.main-none-eabi
   ```
 
-  The build selects the Rust target automatically from the CPU and FPU
-  configuration; for this board it is `thumbv8m.main-none-eabi`
-  (soft-float ABI — `CONFIG_FP_HARDABI` is off by default).
-- **libclang** for bindgen (e.g. `sudo apt install libclang-dev clang`)
+  Rust ターゲットは CPU と FPU の構成から自動で決まります。このボードでは `thumbv8m.main-none-eabi` です (`CONFIG_FP_HARDABI` が既定で無効なため soft-float ABI)。
+- bindgen が使う libclang (例: `sudo apt install libclang-dev clang`)
 
-## Build
+## ビルド
 
-### Option A — dedicated workspace from this repo's manifest
+### 方法 A: このリポジトリのマニフェストで専用ワークスペースを作る
 
 ```sh
-west init -l <path-to-this-repo>
-cd <workspace>
-west update   # fetches sdk-nrf, zephyr and zephyr-lang-rust → modules/lang/rust
+west init -l <このリポジトリのパス>
+cd <ワークスペース>
+west update   # sdk-nrf・zephyr・zephyr-lang-rust (modules/lang/rust) を取得
 
 west build -b nrf54l15dk/nrf54l15/cpuapp -s study-Zephyr-rust/app
 ```
 
-`west update` clones the full NCS tree (several GB).
+`west update` は NCS 全体を clone します (数 GB)。
 
-### Option B — reuse an existing NCS v3.4.2 workspace
+### 方法 B: 既存の NCS v3.4.2 ワークスペースを使う
 
 ```sh
-# fetch the Rust module at the pinned revision
+# ピンされた版で Rust モジュールを取得
 git clone https://github.com/zephyrproject-rtos/zephyr-lang-rust
 cd zephyr-lang-rust && git checkout dd73abc242e995784da62352fe8c70d9a6c7ac2e && cd ..
 
 nrfutil sdk-manager toolchain launch --ncs-version v3.4.2 -- bash -c \
   'ZEPHYR_EXTRA_MODULES=<path>/zephyr-lang-rust \
-   west build -b nrf54l15dk/nrf54l15/cpuapp -s <this-repo>/app'
+   west build -b nrf54l15dk/nrf54l15/cpuapp -s <このリポジトリ>/app'
 ```
 
-### bindgen note (required for picolibc builds)
+### bindgen の注意点 (picolibc 構成では必須)
 
-With `CONFIG_ENFORCE_ZEPHYR_STDINT=y` (default for picolibc), integer
-constant macros such as `__UINT32_C` reach C code through a compiler
-`-imacros` flag that bindgen never sees, so binding generation fails in
-`zephyr/kernel/internal/mm.h`. Work around it by pointing bindgen's clang
-at the same header:
+既定の `CONFIG_ENFORCE_ZEPHYR_STDINT=y` では、`__UINT32_C` などの整数定数マクロがコンパイラの `-imacros` フラグ経由でだけ有効になり、bindgen には届きません。そのままだと `zephyr/kernel/internal/mm.h` でバインディング生成が失敗します。bindgen の clang に同じヘッダを指すことで回避できます。
 
 ```sh
 export BINDGEN_EXTRA_CLANG_ARGS="-imacros ${ZEPHYR_BASE}/include/zephyr/toolchain/zephyr_stdint.h"
 ```
 
-## Expected result
+## 期待する結果
 
-`west build` produces `build/app/zephyr/zephyr.hex`. After flashing
-(`west flash` or `nrfutil device`), the UART console (J-Link OB USB CDC,
-115200 baud) prints:
+`west build` で `build/app/zephyr/zephyr.hex` ができます。書き込み (`west flash` または `nrfutil device`) のあと、J-Link OB の USB シリアル (115200bps) を開くと次の出力が出ます。
 
 ```
 Hello world from Rust on nrf54l15dk
 ```
 
-Not verified on hardware in this repository; verified up to `west build`.
+本リポジトリでは `west build` までを検証しました。実機への書き込みと UART 出力は試していません。

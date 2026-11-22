@@ -5,10 +5,10 @@
 
 ## 概要
 
-- Rustサポートは Zephyr 本体のマニフェストに**含まれない**外部モジュール
+- Rustサポートは Zephyr 本体のマニフェストに含まれない外部モジュール
   [`zephyr-lang-rust`](https://github.com/zephyrproject-rtos/zephyr-lang-rust) として提供される。
 - 開始は2024-09、主導はLinaro (d3zd3z)。ライセンスは Apache-2.0。
-- `CONFIG_RUST` が `select EXPERIMENTAL` するため、公式位置づけは **experimental**。
+- `CONFIG_RUST` が `select EXPERIMENTAL` するため、公式位置づけは experimental。
 
 ## 有効化手順 (公式)
 
@@ -16,7 +16,7 @@
    - 上流Zephyr: `west config manifest.project-filter +zephyr-lang-rust` または
      `zephyr/submanifests/*.yaml` にプロジェクト定義を追加し `west update`。
      配置先は `modules/lang/rust`。
-   - NCS: `name-allowlist` に含まれないため上流の方法は**そのまま使えない**
+   - NCS: `name-allowlist` に含まれないため上流の方法はそのまま使えない
      (→ `community.md`, `design-decisions.md` 参照)。
 2. `prj.conf` に `CONFIG_RUST=y`。
 3. `CMakeLists.txt`: `find_package(Zephyr REQUIRED ...)` の後に `rust_cargo_application()`。
@@ -33,7 +33,7 @@
 
 ## Rustターゲットの選定 (モジュール内 CMakeLists.txt)
 
-CPU種とFPU構成から自動決定される。主な対応:
+CPU種とFPU構成から自動決定される。主な対応は次のとおり。
 
 | Zephyr構成 | Rustターゲット |
 |---|---|
@@ -48,13 +48,13 @@ CPU種とFPU構成から自動決定される。主な対応:
 | RV32 / RV64 (IMAC) | `riscv32i-unknown-none-elf` / `riscv64imac-unknown-none-elf` |
 | posix64 | `x86_64-unknown-none`, `aarch64-unknown-none` |
 
-ツールチェーンは Zephyr SDK に含まれず **rustup で別途導入**。
+ツールチェーンは Zephyr SDK に含まれず、rustup で別途導入する。
 バージョンはピンされていない (rust-toolchain.toml 無し、stable想定)。
 
 ## バインディング生成 (zephyr-sys)
 
 - `bindgen` 0.70.1 (experimental feature) でビルド時にZephyrヘッダから生成。
-  **ホストに libclang が必須**。
+  ホストに libclang が必須。
 - `wrapper.h` がinclude起点。allowlistパターンは `k_.*`, `gpio_.*`, `flash_.*`,
   `zr_.*`, `GPIO_.*`, `FLASH_.*` 等 (revisionにより変動)。
 - 生成物は `zephyr::raw` 経由で参照可能。Kconfig値は `zephyr::kconfig::CONFIG_*`
