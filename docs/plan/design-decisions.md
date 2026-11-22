@@ -13,6 +13,18 @@
 | Rustツール | rustup stable (1.100.0) | 特定バージョンへのピン留めは不要 (モジュールにtoolchainピン無し) |
 | bindgen 環境 | ホストlibclang + `BINDGEN_EXTRA_CLANG_ARGS=-imacros .../zephyr_stdint.h` | zephyr-sys パッチ: 外部モジュールの改変で保守負担。環境変数注入が最小侵襲 |
 
+## 追記: 上流の外部モジュール化 (2026-11-05)
+
+上流 Zephyr main で `zephyr-lang-rust` が optional.yaml から外部モジュールへ
+移行した (コミット `289d75c`)。アプリ側 `west.yml` での明示宣言が新しい公式
+運用となり、本リポジトリの T2型 manifest 方式と一致する。採用時点では回避策
+だったこの方式が、上流の推奨手順になった。
+
+ピンの見直し: main には `RUST_BLOCKING_POOL`、`zephyr-panic`、I2C、
+Hexagon など約99コミットの進展があるが、NCS v3.4.2 との整合を優先し
+`dd73abc` を維持する。main への更新は需要が出た時点の候補とする
+(詳細は `../research/zephyr-rust.md` の差分節)。
+
 ## 残タスク・次候補
 
 - 実機検証: `west flash` + UART `Hello world from Rust on nrf54l15dk` 確認

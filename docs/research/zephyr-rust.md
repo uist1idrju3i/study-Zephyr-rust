@@ -13,9 +13,14 @@
 ## 有効化手順 (公式)
 
 1. west マニフェストにモジュールを追加する
-   - 上流Zephyr: `west config manifest.project-filter +zephyr-lang-rust` または
+   - 上流Zephyr (4.5以前): `west config manifest.project-filter +zephyr-lang-rust` または
      `zephyr/submanifests/*.yaml` にプロジェクト定義を追加し `west update`。
      配置先は `modules/lang/rust`。
+   - 上流Zephyr main (次期4.6): 2026-11-05 のコミット `289d75c`
+     `manifest: move zephyr-lang-rust to be an external module` で
+     optional.yaml から削除され外部モジュール化。アプリ側 `west.yml` の
+     `manifest.projects` への明示追加が必要 (`manifest.project-filter` は無効)。
+     本リポジトリの T2型 `west.yml` はこの新運用と同じ形式。
    - NCS: `name-allowlist` に含まれないため上流の方法はそのまま使えない
      (→ `community.md`, `design-decisions.md` 参照)。
 2. `prj.conf` に `CONFIG_RUST=y`。
@@ -63,6 +68,7 @@ CPU種とFPU構成から自動決定される。主な対応は次のとおり�
 - `build.rs` で `zephyr-build` クレートを呼ぶと `#[cfg]` 向けの条件コンパイルが使える
   (revision dd73abc: `export_bool_kconfig()` / `dt_cfgs()`、
   main: `export_kconfig_bool_options()`。API名が変わっている点に注意)。
+- `log` クレートが標準の出力経路。`defmt` は上流 Issue #60 が未完了。
 
 ## `zephyr` クレートの提供機能 (revision dd73abc 実コード)
 
@@ -80,6 +86,21 @@ CPU種とFPU構成から自動決定される。主な対応は次のとおり�
 | `embassy` | Embassy executor 統合 (サンプル `embassy` / `async-philosophers`) |
 | `simpletls` | 簡易TLS |
 | `object`, `error`, `align`, `alloc_impl` | 内部基盤 |
+
+## ピン dd73abc と main の差分 (2026-11-22 時点)
+
+本リポジトリは NCS v3.4.2 がピンする `dd73abc` を採用しているが、main は
+約99コミット先行している。主な差分は次のとおり。
+
+- `zephyr-panic` クレートへのパニックハンドラ分離 (#169)
+- `RUST_BLOCKING_POOL` Kconfig + `zephyr::blocking::run` (ワーカースレッドで
+  同期 Zephyr API を await 可能に)
+- I2C コントローラ/ターゲットのバインディング (#150)、Hexagon 対応 (#159)
+- Mutex の再入禁止・`MutexGuard: !Send` など安全性修正
+- 進行中PR: UART (blocking/async), RTC, PWM, センサ, watchdog,
+  edtlib 経由の devicetree バインディング生成 など
+- 実機側の未解決Issue: ESP32-C3 #134, ESP32-C6 #141, RISCV32 SMP #62,
+  alloc の atomic 制約 #131, SDK libclang 自動検出 #144, 実機検証文書化 #158
 
 ## 制約・注意点 (コード・ドキュメントから)
 
