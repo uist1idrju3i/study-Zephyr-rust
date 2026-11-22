@@ -12,6 +12,9 @@ in ncs-v3.4.2 (`dd73abc`).
 
 ## Layout
 
+- `docs/` — 調査・検討・検証記録 (Japanese). See
+  [docs/README.md](docs/README.md)
+
 - `west.yml` — standalone (T2) west manifest: imports `sdk-nrf` v3.4.2 and
   adds `zephyr-lang-rust` at `modules/lang/rust`
 - `app/` — minimal `no_std` Rust application (`hello_world`-style):
